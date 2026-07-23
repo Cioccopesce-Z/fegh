@@ -68,12 +68,49 @@ a vector of 5 cells of 2 bytes each is just a variable whose value length is
 chunks of `cell_size` bytes when read back. No separate array type is
 needed.
 
+## Design goals (not yet implemented)
+
+The current code is a minimal demonstration of the record layout and the
+bump allocator. The intended design, once built out, goes further:
+
+- **Growable memory, not a fixed cap.** Because every address in this model
+  is an offset into `memory` rather than a raw C pointer, the underlying
+  buffer can be grown with `realloc` without invalidating any address
+  already stored anywhere. This is one of the main reasons offsets were
+  chosen over pointers in the first place: the buffer is free to move in
+  physical memory as it grows, since nothing outside `begin()` ever holds a
+  real pointer into it.
+- **Scope exit reclaims memory by moving `end` back.** When a scope is
+  exited, the variables declared inside it are dropped from the list and
+  `end` is simply restored to the value it had before entering that scope.
+  No memory is copied or shifted — going out of scope is just moving a
+  cursor backward.
+- **Separate address space for globals.** Variables that must outlive their
+  scope (globals) don't live in the same region as local variables. At
+  compile time, the maximum memory needed for locals is computed by
+  counting the declarations in the scope with the most declarations, which
+  fixes a ceiling address. Global variables are placed above that ceiling.
+  This means exiting a scope never has to shift or touch the globals — only
+  the local `end` cursor moves, since locals and globals never share
+  address space.
+- **Field sizes are parameters, not hardcoded limits.** `byte_for_dim`,
+  `byte_for_scope`, `byte_for_method_lenght` and similar constants are
+  meant to be tunable. The addressable space of a given deployment is a
+  configuration choice, not a hard ceiling baked into the record format.
+
 ## Caveats
 
-- Fixed buffer size (`to_declare`), no bounds-safe growth.
-- No error recovery beyond printed messages.
+- No error recovery beyond printed messages yet — errors are logged but not
+  propagated to a caller in any structured way. This still needs work.
+- Some parts of the allocation logic are not yet optimized; performance
+  hasn't been a priority while the design is still being figured out.
+- Method support currently allows only a single method per variable.
 - No real symbol table yet — declarations are just calls to
   `initialize_variable` from `main()`.
+- The growable-buffer, scope-reclaim, and global/local address split
+  described above are design decisions, not yet reflected in this code —
+  the current `main.c` still uses a single fixed-size buffer with no
+  reclaim.
 
 This is a work in progress, kept intentionally minimal while the underlying
 model is still being figured out.
