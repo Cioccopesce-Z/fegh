@@ -1,116 +1,290 @@
-# Size-Based Memory Model (C prototype)
+# Size-Based Memory Model (C Prototype)
 
-This is a small experimental prototype exploring an alternative way to manage
-variables in a manually allocated memory buffer, in C.
+This repository contains a small experimental prototype exploring an alternative
+memory model based on **record size rather than language types**.
 
-The core idea is to reason about memory in terms of **size**, rather than
-**type**. Instead of declaring a variable as `int`, `char`, etc., a variable
-is described purely by how many bytes it needs to hold its value. The
-allocator doesn't know or care what a value represents, only how big it is.
+The current implementation is written in C as a proof of concept, but its real
+purpose is to validate the memory model that will eventually power a small
+compiled/interpreted programming language.
 
-## Status
+Instead of treating variables as `int`, `char`, `float`, etc., every variable is
+represented simply by the number of bytes required to store its value. The
+compiler (or, in this prototype, the allocator) only reasons about memory
+layout—not about high-level types.
 
-This is a skeleton, not a library. It's a working proof of concept meant to
-show how a size-based memory record could be laid out and manipulated by
-hand, not a production-ready allocator. There is no parser, no language, no
-public API — just a single `main.c` demonstrating the mechanism.
+---
 
-## How it works
+# Current Status
 
-Variables are stored sequentially in a single flat `__uint8_t *memory`
-buffer, allocated once via `begin()`. Each variable is represented as a
-contiguous record with the following layout:
+This is **not** a library or a general-purpose allocator.
+
+It is a minimal prototype demonstrating how variables can be stored inside a
+flat byte buffer using fixed-size records.
+
+The long-term project extends this idea into a compiler and virtual machine
+where:
+
+- the entire memory layout is computed at compile time;
+- all variable addresses are resolved before execution;
+- runtime allocation becomes little more than moving a cursor.
+
+The current C implementation demonstrates only the low-level record layout.
+
+---
+
+# Variable Record
+
+Every variable occupies a contiguous record inside a flat byte buffer.
 
 ```
-[ scope (2B) ][ dim / next address (2B) ][ value length (1B) ][ value (N bytes) ][ optional: method length (2B) + method address(es) ]
+[ scope (2B) ][ dim (2B) ][ value length (1B) ][ value (N bytes) ][ optional methods ]
 ```
 
-- **scope** — identifies which scope the variable belongs to (e.g. global vs
-  main scope).
-- **dim** — the address where the next variable's record begins. This turns
-  the buffer into a de facto linked structure without pointers, since each
-  record knows where the following one starts.
-- **value length** — how many bytes are reserved for the value itself. This
-  is decided once, at first declaration, either explicitly or automatically
-  (based on the smallest number of bytes needed to represent the initial
-  value).
-- **value** — the actual bytes of the value.
-- **method section (optional)** — a variable can optionally carry a
-  reference to a "method": an address pointing into a list of predefined
-  routines (resolved at compile time) that can be applied to that variable.
-  This is scaffolding for future array/object-like behavior more than a
-  finished feature.
+where
 
-Variables are placed one after another using a bump-pointer style allocator:
-a static `end` cursor tracks where the next free slot starts, and each call
-to `initialize_variable` either appends a new variable there or, if an
-address is passed explicitly, overwrites/reassigns an existing one.
+- **scope** identifies the owning scope.
+- **dim** is the total size of the record.
+  It also acts as the stride (or "next record" offset) allowing records to be
+  traversed without linked pointers.
+- **value length** stores the size of the value section.
+- **value** contains the raw bytes representing the stored value.
+- **methods (optional)** are compile-time references to predefined routines
+  associated with the variable.
 
-A key design decision: once a variable's size is set, it never grows. If you
-reassign a variable with a value that needs more bytes than originally
-reserved, the operation fails instead of silently reallocating or shifting
-memory. This keeps the layout predictable and avoids the complexity of
-moving every subsequent record whenever one variable grows.
+The memory model intentionally separates **metadata** from the stored value.
 
-## Why bother with this
+---
 
-Reasoning about memory this way is mostly useful as a learning exercise: it
-forces you to think about what a "variable" actually is at the byte level,
-stripped of any language-level type system. It's also a rough sketch of how
-a very small interpreted language might lay out its own variables in memory
-without leaning on the host language's type system — deciding, essentially,
-"this thing needs N bytes" and building everything else (scoping, method
-dispatch, arrays) on top of that single primitive.
+# Memory Layout
 
-Arrays, for instance, are meant to reuse the exact same record structure:
-a vector of 5 cells of 2 bytes each is just a variable whose value length is
-`cells * cell_size`, with the value bytes conceptually grouped into `cells`
-chunks of `cell_size` bytes when read back. No separate array type is
-needed.
+Variables are stored sequentially inside one flat `uint8_t* memory` buffer.
 
-## Design goals (not yet implemented)
+Allocation uses a simple bump allocator:
 
-The current code is a minimal demonstration of the record layout and the
-bump allocator. The intended design, once built out, goes further:
+```text
+base = end;
+end += record_size;
+```
 
-- **Growable memory, not a fixed cap.** Because every address in this model
-  is an offset into `memory` rather than a raw C pointer, the underlying
-  buffer can be grown with `realloc` without invalidating any address
-  already stored anywhere. This is one of the main reasons offsets were
-  chosen over pointers in the first place: the buffer is free to move in
-  physical memory as it grows, since nothing outside `begin()` ever holds a
-  real pointer into it.
-- **Scope exit reclaims memory by moving `end` back.** When a scope is
-  exited, the variables declared inside it are dropped from the list and
-  `end` is simply restored to the value it had before entering that scope.
-  No memory is copied or shifted — going out of scope is just moving a
-  cursor backward.
-- **Separate address space for globals.** Variables that must outlive their
-  scope (globals) don't live in the same region as local variables. At
-  compile time, the maximum memory needed for locals is computed by
-  counting the declarations in the scope with the most declarations, which
-  fixes a ceiling address. Global variables are placed above that ceiling.
-  This means exiting a scope never has to shift or touch the globals — only
-  the local `end` cursor moves, since locals and globals never share
-  address space.
-- **Field sizes are parameters, not hardcoded limits.** `byte_for_dim`,
-  `byte_for_scope`, `byte_for_method_lenght` and similar constants are
-  meant to be tunable. The addressable space of a given deployment is a
-  configuration choice, not a hard ceiling baked into the record format.
+Records are never moved after creation.
 
-## Caveats
+A variable's record size is immutable.
 
-- No error recovery beyond printed messages yet — errors are logged but not
-  propagated to a caller in any structured way. This still needs work.
-- Some parts of the allocation logic are not yet optimized; performance
-  hasn't been a priority while the design is still being figured out.
-- Method support currently allows only a single method per variable.
-- No real symbol table yet — declarations are just calls to
-  `initialize_variable` from `main()`.
-- The growable-buffer, scope-reclaim, and global/local address split
-  described above are design decisions, not yet reflected in this code —
-  the current `main.c` still uses a single fixed-size buffer with no
-  reclaim.
+If a reassignment would require more bytes than originally reserved, the write
+fails instead of relocating memory.
 
-This is a work in progress, kept intentionally minimal while the underlying
-model is still being figured out.
+Keeping record sizes fixed allows every address computed at compile time to
+remain valid throughout execution.
+
+---
+
+# Address Model
+
+The future language uses **relative addresses** rather than absolute pointers.
+
+Every address has the form
+
+```
+x + y
+```
+
+where
+
+- `x` is the runtime base address of the current scope.
+- `y` is the compile-time offset inside that scope.
+
+The language defines three addressing operators:
+
+| Notation | Meaning |
+|----------|---------|
+| `x` | address itself |
+| `'x` | raw byte stored at address `x` |
+| `:x` | structured value stored in the record |
+
+Example:
+
+```
+x       = address
+'x      = dim
+'(x+1)  = length
+:x      = value
+```
+
+Since only the scope base changes at runtime, every internal offset remains
+constant.
+
+---
+
+# Compile-Time Memory Mapping
+
+The final language does **not** allocate variables one by one while executing.
+
+Instead, the compiler performs two independent tasks.
+
+## 1. Memory Print
+
+The compiler builds the complete memory layout of the program:
+
+- global variables
+- every function signature
+- every scope signature
+- offsets of every variable
+
+The result is saved as a **Memory Print**, containing the byte template of every
+scope.
+
+Each scope template already includes:
+
+- record sizes,
+- offsets,
+- default values,
+- attached methods.
+
+## 2. AST Bytecode
+
+Separately, the compiler generates a bytecode where every symbolic reference has
+already been replaced with its corresponding relative address.
+
+For example,
+
+```
+eta = 5
+```
+
+becomes something equivalent to
+
+```
+copy :(x+6) :5
+```
+
+No name lookup is performed at runtime.
+
+---
+
+# Scope Instantiation
+
+A scope signature is **not** an allocated block of memory.
+
+It is only a template.
+
+Entering a scope performs one operation:
+
+```text
+base = current_end;
+current_end += scope_size;
+```
+
+Leaving the scope simply restores the previous value of `current_end`.
+
+```text
+current_end = previous_end;
+```
+
+No variable-by-variable allocation occurs.
+
+No heap management is required.
+
+Because every invocation receives a different runtime base address, recursive
+calls naturally create independent scope instances while reusing the same
+compile-time template.
+
+The global scope (`main`) is instantiated once at startup and never reclaimed.
+
+---
+
+# Arrays
+
+Arrays reuse exactly the same record structure.
+
+An array is simply a value composed of multiple equally sized cells.
+
+```
+let values : cell_size : cell_count = ...
+```
+
+Constant indexing is resolved entirely at compile time.
+
+```
+array[5]
+```
+
+becomes a fixed offset.
+
+Variable indexing becomes
+
+```
+:( (x+y) + :(index) * 'array )
+```
+
+where `'array` is the stride stored inside the record.
+
+All elements of an array must share the same structure (including attached
+methods), ensuring a constant stride.
+
+---
+
+# Why This Model?
+
+The goal is to reduce runtime memory management to almost nothing.
+
+Instead of allocating individual variables during execution, the compiler
+already knows:
+
+- every variable,
+- every record size,
+- every scope size,
+- every offset,
+- every parameter layout.
+
+Runtime execution therefore consists mostly of:
+
+- loading the memory templates,
+- instantiating scopes,
+- executing bytecode.
+
+No symbol lookup.
+
+No variable allocation.
+
+Almost no address computation.
+
+---
+
+# Future Design Goals
+
+The current prototype demonstrates only the record layout.
+
+The complete implementation is intended to support:
+
+- growable memory using `realloc()` while keeping offsets valid;
+- compile-time generated Memory Print files;
+- compile-time generated AST bytecode;
+- automatic scope instantiation from templates;
+- scope destruction by rewinding the allocation cursor;
+- separate regions for global and local memory;
+- configurable metadata sizes (`scope`, `dim`, etc.);
+- compile-time method resolution;
+- recursive function calls without special runtime handling.
+
+---
+
+# Current Limitations
+
+The prototype is intentionally minimal.
+
+Currently it lacks:
+
+- a parser;
+- a compiler;
+- the Memory Print generator;
+- the AST bytecode generator;
+- a virtual machine;
+- a symbol table;
+- structured error handling;
+- bounds checking;
+- multiple methods per variable.
+
+These components belong to the next stage of the project.
+
+The present code exists solely to validate the underlying memory model before
+building the compiler and runtime around it.
