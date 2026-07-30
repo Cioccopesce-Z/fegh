@@ -94,7 +94,7 @@ size_t get_value_of_variable(size_t address){
     return value;
 }
 
-size_t get_method_lenght_in_byte_from_address(size_t address){
+size_t get_methodlist_lenght_in_byte_from_address(size_t address){
 
 
     __uint8_t lenght_of_value = get_lenght_in_byte_of_value_from_address(address);
@@ -108,6 +108,29 @@ size_t get_method_lenght_in_byte_from_address(size_t address){
 
     return lenght_in_byte_of_method_lenght;
 
+}
+
+size_t get_methodlist_of_variable_from_address(size_t address){
+
+    __uint8_t method_list_lenght_in_byte = get_methodlist_lenght_in_byte_from_address(address);
+    __uint8_t lenght_of_value = get_lenght_in_byte_of_value_from_address(address);
+
+    size_t methodlist_code = 0;
+
+    for (int i = 1; i <= method_list_lenght_in_byte; i++) {
+        methodlist_code |= (size_t)memory[address + byte_for_scope + 
+                                            byte_for_dim + lenght_of_value + method_list_lenght_in_byte + i] 
+                                                            << (8 * (i-1));
+    }
+
+    return methodlist_code;
+
+
+}
+
+
+size_t get_value_of_address(size_t address){
+    return (size_t)memory[address];
 }
 
 //FUNCTION TO WRITE
@@ -293,9 +316,6 @@ void set_scope_start_end(int is_start, int auto_set_code_for_scope, int scope_co
     }
 }
 
-size_t get_value_of_address(size_t address){
-    return (size_t)memory[address];
-}
 
 
 int main(){
@@ -314,10 +334,22 @@ int main(){
 
     set_scope_start_end(fal,auto,fal);
 
-    printf("%lu-28 %lu-30 %lu-31 %lu-78\n",get_value_of_variable(idx),
+    printf("current value %lu-28 %lu-30 %lu-31 %lu-78\n\n",get_value_of_variable(idx),
                                     get_value_of_variable(ix),
                                     get_value_of_variable(id),
                                     get_value_of_variable(ids));
+
+    printf("methodlist of belonging %lu-59 %lu-55 %lu-55 %lu-55\n",
+                get_methodlist_of_variable_from_address(idx),
+                get_methodlist_of_variable_from_address(ix),
+                get_methodlist_of_variable_from_address(id),
+                get_methodlist_of_variable_from_address(ids));
+
+    
+    printf("\n");
+    printf("address direct value <%lu-21>\n",get_value_of_address(1));
+    printf("\n");
+
         
     printf("\n");
     printf("crs position; <%lu>\n",memory_cursor);
