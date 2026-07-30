@@ -1,7 +1,17 @@
-let a: 1;
 
-let b: 1;
+scope main {
 
-let c[5]: 1;
+    let a: 1 = 59;
 
-let d: 2;
+    let b: 1 = 55;
+
+    let c[2]: 1 = 55,55;
+
+}
+
+scope function {
+
+    let d: 1 = 7;
+
+}
+
