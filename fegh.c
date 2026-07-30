@@ -1,13 +1,12 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
 #include <string.h>
 
-#define to_declare 20
-#define byte_for_dim 2
+#define to_declare 35   
+#define byte_for_dim 1
 #define byte_for_scope 0
-#define byte_for_method_lenght 2
+#define byte_for_method_lenght 1
 #define byte_for_vleng 1
 #define byte_for_lenght_of_the_lenght_of_the_scope 1
 #define byte_for_scope_code 1
@@ -17,6 +16,7 @@
 #define auto fal
 #define up 16
 #define down 4
+#define debug fal
 
 #define global_scope 0
 #define main_scope 1
@@ -30,7 +30,6 @@ size_t memory_cursor = 0;
 
 //(eventual now disabled) code_scope    <---- address pt1
 //(eventual now disabled) code_scope    <---- address pt2
-
 //2 var dim       <---- sum eq address end line (eg 10)
 //3 var dim       <---- sum eq address end line (eg 10)
 //4 lenght in byte
@@ -57,13 +56,19 @@ size_t bytes_needed(__uintmax_t value){
 
 // FUNCTION TO READ
 
-size_t get_lenght_in_byte_from_address(size_t address){
+size_t get_lenght_in_byte_of_value_from_address(size_t address){
 
-    return (size_t)memory[address + byte_for_dim + byte_for_scope];
+    size_t v_lenght_in_byte = 0;
+
+    for (int i = 0; i < byte_for_vleng; i++) {
+        v_lenght_in_byte |= (size_t)memory[address + byte_for_scope + byte_for_dim +  i] << (8 * i);
+    }
+
+    return v_lenght_in_byte;
 
 }
 
-size_t get_current_scope_by_address(size_t address){
+size_t get_current_scope_from_address(size_t address){
 
     size_t scope = 0;
 
@@ -77,7 +82,8 @@ size_t get_current_scope_by_address(size_t address){
 
 size_t get_value_of_variable(size_t address){
 
-    __uint8_t lenght_of_value = memory[address + byte_for_scope +byte_for_dim];
+    __uint8_t lenght_of_value = get_lenght_in_byte_of_value_from_address(address);
+    if(debug) printf("get lenght of value in byte already written: %d\n", lenght_of_value);
 
     size_t value = 0;
 
@@ -86,6 +92,22 @@ size_t get_value_of_variable(size_t address){
     }
 
     return value;
+}
+
+size_t get_method_lenght_in_byte_from_address(size_t address){
+
+
+    __uint8_t lenght_of_value = get_lenght_in_byte_of_value_from_address(address);
+
+    size_t lenght_in_byte_of_method_lenght = 0;
+
+    for (int i = 1; i <= byte_for_method_lenght; i++) {
+        lenght_in_byte_of_method_lenght |= (size_t)memory[address + byte_for_scope + byte_for_dim + lenght_of_value + i] 
+                                                            << (8 * (i-1));
+    }
+
+    return lenght_in_byte_of_method_lenght;
+
 }
 
 //FUNCTION TO WRITE
@@ -109,7 +131,7 @@ void shift_all_memory(int direction, int number_of_shifts, int use_carry, size_t
     }
 }
 
-void add_method_to_variable(){
+void add_method_to_variable(size_t address){
 
 }
 
@@ -122,7 +144,7 @@ se lenght_in_byte è = 0 allora viene assegnata autonomamente la dimensione
 mentre viene specificato con use_method se ci sono da aggiungere metodi alla variabile*/
 size_t initialize_variable(int use_scope, size_t scope_address,
                             int use_address, size_t address_offset,  
-                            size_t lenght_in_byte, __uintmax_t value,
+                            size_t lenght_in_byte_of_value, __uintmax_t value,
                             int use_method, size_t method_address){
 
     size_t start = 0;
@@ -138,7 +160,7 @@ size_t initialize_variable(int use_scope, size_t scope_address,
         return start;
     }
 
-    size_t old_lenght_in_byte = get_lenght_in_byte_from_address(start);
+    size_t old_lenght_in_byte = get_lenght_in_byte_of_value_from_address(start);
 
     if (old_lenght_in_byte > 0) {
         if (bytes_needed(value) > old_lenght_in_byte) {
@@ -146,21 +168,21 @@ size_t initialize_variable(int use_scope, size_t scope_address,
                 (size_t)value, bytes_needed(value), old_lenght_in_byte);
             return start;
         }
-        lenght_in_byte = old_lenght_in_byte;
+        lenght_in_byte_of_value = old_lenght_in_byte;
     }
     else {
-        if (lenght_in_byte == 0) {
-            lenght_in_byte = bytes_needed(value);
+        if (lenght_in_byte_of_value == 0) {
+            lenght_in_byte_of_value = bytes_needed(value);
         }
-        else if (lenght_in_byte < bytes_needed(value)) {
+        else if (lenght_in_byte_of_value < bytes_needed(value)) {
             printf("error: the requested lenght of: %lubyte is to little to fit the value: %lu \nare needed at least: %lubyte \n\n",
-                    lenght_in_byte, value, bytes_needed(value));
+                    lenght_in_byte_of_value, value, bytes_needed(value));
             return start;
         }
     }
-    printf("%lubyte for \"%lu\" numero di celle value da utilizzare\n", lenght_in_byte, value);
+    printf("%lubyte for \"%lu\" numero di celle value da utilizzare\n", lenght_in_byte_of_value, value);
 
-    if(start + byte_for_scope + byte_for_dim + lenght_in_byte >= to_declare){
+    if(start + byte_for_scope + byte_for_dim + lenght_in_byte_of_value >= to_declare){
         printf("error: cannot declare other variable risk of overflow\n"
             "try to increase the capacity of %d\n", to_declare);
         return start;
@@ -176,14 +198,13 @@ size_t initialize_variable(int use_scope, size_t scope_address,
         }
     }
 
-    memory[start + byte_for_dim + byte_for_scope] = lenght_in_byte;
+    memory[start + byte_for_dim + byte_for_scope] = lenght_in_byte_of_value;
 
-    for(size_t i = 1; i <= lenght_in_byte; i++){
+    for(size_t i = 1; i <= lenght_in_byte_of_value; i++){
         memory[start + byte_for_dim + byte_for_scope + i] = (__uint8_t)(value >> (8 * (i-1)));
     }
 
-    // FIX: +byte_for_vleng -> punta al primo byte libero dopo il valore, non all'ultimo usato
-    size_t record_end = start + byte_for_scope + byte_for_dim + byte_for_vleng + lenght_in_byte;
+    size_t record_end = start + byte_for_scope + byte_for_dim + byte_for_vleng + lenght_in_byte_of_value;
 
     if(!use_method){
         memory_cursor = use_address ? backup_end : record_end;
@@ -218,8 +239,7 @@ size_t initialize_variable(int use_scope, size_t scope_address,
     return start;
 }
 
-void set_scope_start_end(int is_start, int auto_set_code_for_scope, int scope_code)
-{
+void set_scope_start_end(int is_start, int auto_set_code_for_scope, int scope_code){
     static size_t scope_start = 0;
     static size_t length_address = 0;
     static int scope_counter = 0;
@@ -287,15 +307,17 @@ int main(){
 
     set_scope_start_end(tru,auto,fal);
     
-    int idx = initialize_variable(tru,main_scope,fal,auto,auto,511,tru,256);
-    int ix = initialize_variable(tru,main_scope,fal,auto,auto,85,fal,256);
-    int id = initialize_variable(tru,main_scope,fal,auto,auto,43,fal,256);
+    int idx = initialize_variable(tru,main_scope,fal,auto,auto,28,tru,59);
+    int ix = initialize_variable(tru,main_scope,fal,auto,auto,30,tru,55);
+    int id = initialize_variable(tru,main_scope,fal,auto,auto,31,tru,55);
+    int ids = initialize_variable(tru,main_scope,fal,auto,auto,78,tru,55);
 
     set_scope_start_end(fal,auto,fal);
 
-    printf("%lu-511 %lu-85 %lu-43\n",get_value_of_variable(idx),
+    printf("%lu-28 %lu-30 %lu-31 %lu-78\n",get_value_of_variable(idx),
                                     get_value_of_variable(ix),
-                                    get_value_of_variable(id));
+                                    get_value_of_variable(id),
+                                    get_value_of_variable(ids));
         
     printf("\n");
     printf("crs position; <%lu>\n",memory_cursor);
