@@ -1,8 +1,10 @@
 #ifndef MEM_H
 #define MEM_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 #define tru 1
 #define fal 0

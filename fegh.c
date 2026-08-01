@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "mem.h"
+#include "loader.h"
 
 /* memoria vera e propria: allocata da begin(), dichiarata qui perche'
    e' il file-main che decide dimensioni e vive per tutta l'esecuzione. */
@@ -57,5 +58,19 @@ int main(){
     for (size_t i = 0; i < to_declare; i++){
         printf("line(%zu) %ld: %u\n",i, (long)(memory + i), memory[i]);
     }
+
+    printf("\n\n");
+    printf("scipt:");
+    printf("\n\n");
+
+
+    load_script("test.fgh");
+
+    for (size_t i = 0; i < script_size; i++){
+
+        printf("%lu %s\n",i ,script[i]);
+    }
+
+    free_script();
 
 }

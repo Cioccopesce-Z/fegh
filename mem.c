@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "mem.h"
 
 void begin(size_t byte_to_allocate){
