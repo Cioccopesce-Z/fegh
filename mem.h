@@ -38,10 +38,11 @@ size_t bytes_needed(__uintmax_t value);
 size_t get_lenght_in_byte_of_value_from_address(size_t address);
 size_t get_scope_of_variable_from_address(size_t address);
 size_t get_value_of_variable(size_t address);
-size_t get_variable_struct_dimension_from_address(size_t address);
+size_t get_variable_struct_end_index_from_address(size_t address);
 size_t get_methodlist_lenght_in_byte_from_address(size_t address);
 size_t get_methodlist_of_variable_from_address(size_t address);
 size_t get_value_of_address(size_t address);
+size_t get_direct_lenght_in_byte_of_variable_struct(size_t address);
 
 // FUNCTION TO WRITE
 size_t resolve_value_lenght(size_t existing_lenght, size_t requested_lenght, __uintmax_t value);
@@ -59,6 +60,7 @@ void set_scope_start_end(int is_start, int auto_set_code_for_scope, int scope_co
 void update_value_of_variable_from_address(size_t address, __uintmax_t value);
 void update_method_of_variable_from_address(size_t address);
 
+size_t declare_simple_array(size_t byte_dim, size_t value, size_t methodlist, size_t repetition);
 size_t declare_simple_variable(size_t byte_dim, size_t value, size_t methodlist);
 
 #endif

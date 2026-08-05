@@ -1,15 +1,25 @@
 
-scope main {
-
+scope main( let hei: 6 ! let fegh : 1 : 3 ) { 
+    
     let a: 1 = 59;
 
-    let b: 1 = 55;
+    let b: 1 = 55; 
+    
+    let h: 78;
 
-    let c[2]: 1 = 55,55;
+    let c: 1 :2 = 55;
 
 }
 
-scope function {
+scope function( let nome: 1 ! let var: 1 : 5 ) {
+
+    let fellas :1 :6;
+
+    if ( test << hallo ! by ++ ) {
+
+        let f: 6;
+
+    }
 
     let d: 1 = 7;
 

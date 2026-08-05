@@ -1,4 +1,5 @@
 #include "mem.h"
+#include <stddef.h>
 
 void begin(size_t byte_to_allocate){
 
@@ -39,6 +40,7 @@ size_t get_scope_of_variable_from_address(size_t address){
 
 }
 
+// :x
 size_t get_value_of_variable(size_t address){
 
     size_t lenght_of_value = get_lenght_in_byte_of_value_from_address(address);
@@ -54,7 +56,7 @@ size_t get_value_of_variable(size_t address){
     return value;
 }
 
-size_t get_variable_struct_dimension_from_address(size_t address){
+size_t get_variable_struct_end_index_from_address(size_t address){
 
     size_t struct_dim = 0;
 
@@ -75,7 +77,7 @@ size_t get_methodlist_lenght_in_byte_from_address(size_t address){
     size_t lenght_of_value = get_lenght_in_byte_of_value_from_address(address);
     size_t value_end = address + byte_for_scope + byte_for_dim + byte_for_vleng + lenght_of_value;
 
-    if(get_variable_struct_dimension_from_address(address) <= value_end){
+    if(get_variable_struct_end_index_from_address(address) <= value_end){
         return 0; // nessun metodo presente, non un indirizzo
     }
 
@@ -102,7 +104,16 @@ size_t get_methodlist_of_variable_from_address(size_t address){
     return methodlist_code;
 }
 
+size_t get_direct_lenght_in_byte_of_variable_struct(size_t address){
 
+    size_t dimension = get_variable_struct_end_index_from_address(address);
+
+    dimension = dimension - address;
+
+    return dimension;
+}
+
+// `x
 size_t get_value_of_address(size_t address){
     return (size_t)memory[address];
 }
@@ -110,10 +121,10 @@ size_t get_value_of_address(size_t address){
 //FUNCTION TO WRITE
 
 /* calcola la lenght in byte finale del value.
-   se esiste gia' una lenght per questo slot, resta quella (fissata alla
-   dichiarazione): errore se il nuovo value non ci sta.
-   altrimenti: se richiesta = 0 -> autodimensionata su value,
-   errore se richiesta < byte necessari per value. */
+se esiste gia' una lenght per questo slot, resta quella (fissata alla
+dichiarazione): errore se il nuovo value non ci sta.
+altrimenti: se richiesta = 0 -> autodimensionata su value,
+errore se richiesta < byte necessari per value. */
 size_t resolve_value_lenght(size_t existing_lenght, size_t requested_lenght, __uintmax_t value){
     size_t needed = bytes_needed(value);
 
@@ -158,17 +169,19 @@ size_t resolve_method_lenght(size_t existing_lenght, size_t method_address){
     return needed;
 }
 
-void write_value(size_t start, size_t lenght_in_byte, __uintmax_t value){
+//used by initialize value not recomended
+void write_value(size_t address, size_t lenght_in_byte, __uintmax_t value){
     for(size_t i = 0; i < byte_for_vleng; i++){
-        memory[start + byte_for_scope + byte_for_dim + i] = (__uint8_t)(lenght_in_byte >> (8 * i));
+        memory[address + byte_for_scope + byte_for_dim + i] = (__uint8_t)(lenght_in_byte >> (8 * i));
     }
 
-    size_t value_start = start + byte_for_scope + byte_for_dim + byte_for_vleng;
+    size_t value_start = address + byte_for_scope + byte_for_dim + byte_for_vleng;
     for(size_t k = 0; k < lenght_in_byte; k++){
         memory[value_start + k] = (__uint8_t)(value >> (8 * k));
     }
 }
 
+//used by initialize value not recomended
 void write_methodlist(size_t record_end, size_t method_lenght, size_t method_address){
     for(size_t i = 0; i < byte_for_method_lenght; i++){
         memory[record_end + i] = (__uint8_t)(method_lenght >> (8 * i));
@@ -309,6 +322,17 @@ void update_value_of_variable_from_address(size_t address, __uintmax_t value){
 
 void update_method_of_variable_from_address(size_t address){
 
+}
+
+size_t declare_simple_array(size_t byte_dim, size_t value, size_t methodlist, size_t repetition){
+
+    size_t first_index_of_vector = declare_simple_variable(byte_dim, value, methodlist);
+
+    for(size_t i = 1; i < repetition; i++){
+        declare_simple_variable(byte_dim, value, methodlist);
+    }
+
+    return first_index_of_vector;
 }
 
 

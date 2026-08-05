@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include "mem.h"
 #include "loader.h"
+#include "memory_parser.h"
+
+//nonn possono essere dichiarate variabili a runtime, ma hanno un comportamento tipo static, dichiarate una volta sola
+// e poi riassegnate
+
+
 
 /* memoria vera e propria: allocata da begin(), dichiarata qui perche'
    e' il file-main che decide dimensioni e vive per tutta l'esecuzione. */
@@ -11,9 +17,10 @@ size_t memory_cursor = 0;
 size_t to_declare = 35;
 size_t byte_for_lenght_of_the_lenght_of_the_scope = 1;
 size_t byte_for_scope_code = 1;
+
 size_t byte_for_scope = 0;
 size_t byte_for_dim = 1;
-size_t byte_for_vleng = 2;
+size_t byte_for_vleng = 1;
 size_t byte_for_method_lenght = 1;
 
 int main(){
@@ -27,6 +34,7 @@ int main(){
 
     int idx = initialize_variable(tru,main_scope,fal,auto,auto,28,tru,59);
     update_value_of_variable_from_address(idx, 87);
+
     int ix = initialize_variable(tru,main_scope,fal,auto,auto,30,tru,55);
     update_value_of_variable_from_address(ix, 32);
     int id = initialize_variable(tru,main_scope,fal,auto,auto,31,tru,55);
@@ -35,21 +43,32 @@ int main(){
     set_scope_start_end(fal,auto,fal);
 
     printf("current value %lu-87 %lu-32 %lu-31 %lu-78\n\n",get_value_of_variable(idx),
-                                    get_value_of_variable(ix),
-                                    get_value_of_variable(id),
-                                    get_value_of_variable(ids));
+    get_value_of_variable(ix),
+    get_value_of_variable(id),
+    get_value_of_variable(ids));
 
-    printf("methodlist of belonging %lu-59 %lu-55 %lu-55 %lu-55\n",
-                get_methodlist_of_variable_from_address(idx),
-                get_methodlist_of_variable_from_address(ix),
-                get_methodlist_of_variable_from_address(id),
-                get_methodlist_of_variable_from_address(ids));
+    printf("methodlist of belonging %lu-59 %lu-55 %lu-55 %lu-55\n\n",
+    get_methodlist_of_variable_from_address(idx),
+    get_methodlist_of_variable_from_address(ix),
+    get_methodlist_of_variable_from_address(id),
+    get_methodlist_of_variable_from_address(ids));
 
+    printf("direct end index of variable struct in byte %lu-7 %lu-12 %lu-17 %lu-22\n\n",
+    get_variable_struct_end_index_from_address(idx),
+    get_variable_struct_end_index_from_address(ix),
+    get_variable_struct_end_index_from_address(id),
+    get_variable_struct_end_index_from_address(ids));
+
+    printf("direct lenght in byte of var struct %lu-5 %lu-5 %lu-5 %lu-5\n\n",
+    get_direct_lenght_in_byte_of_variable_struct(idx),
+    get_direct_lenght_in_byte_of_variable_struct(ix),
+    get_direct_lenght_in_byte_of_variable_struct(id),
+    get_direct_lenght_in_byte_of_variable_struct(ids));
+    
 
     printf("\n");
-    printf("address direct value <%lu-25>\n",get_value_of_address(1));
+    printf("address direct value <%lu-21>\n",get_value_of_address(1));
     printf("\n");
-
 
     printf("\n");
     printf("crs position; <%lu>\n",memory_cursor);
@@ -59,17 +78,50 @@ int main(){
         printf("line(%zu) %ld: %u\n",i, (long)(memory + i), memory[i]);
     }
 
-    printf("\n\n");
-    printf("scipt:");
-    printf("\n\n");
 
+
+    /*SCRIPT ANALIZATION PART*/
+
+    printf("\n\n");
 
     load_script("test.fgh");
 
-    for (size_t i = 0; i < script_size; i++){
+    printscript();
 
-        printf("%lu %s\n",i ,script[i]);
+    build_scope_signatures();
+
+    printf("Scope trovati: %zu\n\n", scope_count);
+
+    for(size_t i = 0; i < scope_count; i++){
+
+        printf("----------------------------------------\n");
+        printf("Nome      : %s\n", scope_table[i].name);
+        printf("Funzione  : %s\n", scope_table[i].is_function ? "SI" : "NO");
+        printf("Inizio    : %d\n", scope_table[i].start_line);
+        printf("Fine      : %d\n", scope_table[i].end_line);
+
+        if(scope_table[i].arg_count){
+            printf("Argomenti:\n");
+            for(size_t j = 0; j < scope_table[i].arg_count; j++)
+                printf("   %s\n", scope_table[i].args[j]);
+        }
+
+        printf("\n");
     }
+
+    printf("\n");
+    printf("\n");
+
+    for(size_t i = 0; i < scope_count; i++){
+
+        printf("\n\n%lu' scope \n",i);
+
+        calcuate_dimesion_in_byte_for_a_scope_not_declaring(scope_table[i].start_line, scope_table[i].end_line);
+    }
+
+
+
+    free_scope_signatures();
 
     free_script();
 
