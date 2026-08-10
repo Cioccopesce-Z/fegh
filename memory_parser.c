@@ -1,16 +1,42 @@
 #include "memory_parser.h"
 #include "loader.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define MAX_NUMBER_OF_SCOPE 25
+#define MAX_NUMBER_OF_VAR_IN_A_SCOPE 25
+#define MAX_LENGHT_OF_VAR_NAME 25
+
+
+#define std_memory_dim_for_var_id 24
+
+
+typedef struct {
+    char name[MAX_LENGHT_OF_VAR_NAME];
+    size_t dimension; //in byte
+    size_t value;
+    size_t repetition; //number of variable with this structure to declared
+    size_t method_list_code; //method_list id
+} var_data_struct;
+
+void create_table_for_linking_variable_nameto_their_idx(){
+
+    static char reference_table[MAX_NUMBER_OF_SCOPE][MAX_NUMBER_OF_VAR_IN_A_SCOPE][MAX_LENGHT_OF_VAR_NAME];
+}
+
+size_t number_of_declared_variable_in_a_scope = 0;
 
 
 /*charateristic sta per tutti i numeri che vengono dopo il nome e prima di = in modo da poterli interpretare come
 dimesnione in byte, repetion, repetition, finche is_last non e' vero che allora l'ultimo inviato
 diventa la lista dei metodi appartenente, se non viene assegnato allora si non si includono metodi*/
-size_t parse_let(char *name, int is_last){
+void parse_let(char *name, int is_last){
 
-    return 0;
+
+
+    return;
 }
 
 
@@ -26,6 +52,7 @@ size_t return_dimension_in_byte_of_var_struct(char *start_to_parse_let_instructi
             parse_let(tok,false);
             tok = strtok(NULL, ":");
         }
+
         printf("\n");
 
     }

@@ -1,13 +1,13 @@
 
 scope main( let hei: 6 ! let fegh : 1 : 3 ) { 
     
-    let a: 1 = 59;
+    let a: 1 : = 59;
 
-    let b: 1 = 55; 
+    let b: 1 : = 55; 
     
     let h: 78;
 
-    let c: 1 :2 = 55;
+    let c: 1 :2 : = 55;
 
 }
 
@@ -21,7 +21,7 @@ scope function( let nome: 1 ! let var: 1 : 5 ) {
 
     }
 
-    let d: 1 = 7;
+    let d: 1 : = 7;
 
 }
 
