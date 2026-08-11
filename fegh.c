@@ -116,10 +116,10 @@ int main(){
 
         printf("\n\n%lu' scope \n",i);
 
-        calcuate_dimesion_in_byte_for_a_scope_not_declaring(scope_table[i].start_line, scope_table[i].end_line);
+        create_metadata_for_var_struct_in_a_scope(scope_table[i].start_line, scope_table[i].end_line);
     }
 
-
+    stampa_contenuto_var_table();
 
     free_scope_signatures();
 

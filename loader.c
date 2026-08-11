@@ -1,3 +1,4 @@
+#include "sintax_keyword.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -209,7 +210,7 @@ static void add_argument(sign_of_scope *scope, const char *text){
 * Interpreta un singolo token argomento nella forma "let <nome>: <dimensione>",
 * ignorando qualunque spaziatura al suo interno, e lo aggiunge allo scope.
 *
-* token -> testo del singolo argomento, già isolato dallo split su '!'
+* token -> testo del singolo argomento, già isolato dallo split su 'DIVIDER_KEY'
 * scope -> scope a cui aggiungere l'argomento risultante
 */
 static void parse_single_argument(char *token, sign_of_scope *scope){
@@ -224,7 +225,7 @@ static void parse_single_argument(char *token, sign_of_scope *scope){
 * parse_arguments
 * ---------------
 * Estrae la lista argomenti dalla riga di dichiarazione di una funzione,
-* cioè il contenuto tra '(' e ')', e la spezza sul separatore '!'.
+* cioè il contenuto tra '(' e ')', e la spezza sul separatore 'DIVIDER_KEY'.
 * Ogni pezzo viene passato a parse_single_argument.
 *
 * line  -> riga sorgente contenente "od nome( ... ){"
@@ -243,10 +244,10 @@ static void parse_arguments(const char *line, sign_of_scope *scope){
     memcpy(buffer, begin, end - begin);
     buffer[end - begin] = '\0';
 
-    char *tok = strtok(buffer, "!");
+    char *tok = strtok(buffer, DIVIDER_KEY);
     while(tok){
         parse_single_argument(tok, scope);
-        tok = strtok(NULL, "!");
+        tok = strtok(NULL, DIVIDER_KEY);
     }
 
     free(buffer);
@@ -295,20 +296,20 @@ static void parse_scope(size_t line, sign_of_scope *scope){
         parse_arguments(l, scope);
         return;
     }
-    if(starts_with(l, "othif"))
-        scope->name = strdup("othif");
-    else if(starts_with(l, "if"))
-        scope->name = strdup("if");
+    if(starts_with(l, ELSE_IF_KEY))
+        scope->name = strdup(ELSE_IF_KEY);
+    else if(starts_with(l, IF_KEY))
+        scope->name = strdup(IF_KEY);
     else if(starts_with(l, "while"))
         scope->name = strdup("while");
     else if(starts_with(l, "during"))
         scope->name = strdup("during");
     else if(starts_with(l, "for"))
         scope->name = strdup("for");
-    else if(starts_with(l, "oth"))
-        scope->name = strdup("oth");
-    else if(starts_with(l, "#"))
-        scope->name = strdup("#");
+    else if(starts_with(l, ELSE_KEY))
+        scope->name = strdup(ELSE_KEY);
+    else if(starts_with(l, MACRO_INDENT_KEY))
+        scope->name = strdup(MACRO_INDENT_KEY);
     else if(starts_with(l, "C"))
         scope->name = strdup("C");
     else

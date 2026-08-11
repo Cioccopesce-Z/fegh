@@ -1,4 +1,6 @@
 #include "mem.h"
+#include "memory_parser.h"
+#include "sintax_keyword.h"
 #include <stddef.h>
 
 void begin(size_t byte_to_allocate){
@@ -16,6 +18,20 @@ size_t bytes_needed(__uintmax_t value){
 
 // FUNCTION TO READ
 
+/*
+
+size_t resolve_array_index_from_normal_sintax(size_t address_of_array,size_t repetition, size_t rank, 
+                                        size_t value_of_index[]){
+    
+    // :((Xa + o) + :(Xi + o)[] * repetition[] * $a)
+
+    get_value_of_address(address_of_array  + 
+                    value_of_index[i] * repetition[i] *get_direct_lenght_in_byte_of_variable_struct(address_of_array)
+                        );
+}
+
+
+*/
 size_t get_lenght_in_byte_of_value_from_address(size_t address){
 
     size_t v_lenght_in_byte = 0;
