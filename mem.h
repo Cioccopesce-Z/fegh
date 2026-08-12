@@ -44,6 +44,10 @@ size_t get_methodlist_of_variable_from_address(size_t address);
 size_t get_value_of_address(size_t address);
 size_t get_direct_lenght_in_byte_of_variable_struct(size_t address);
 
+//function to parse and get the correct address of an array by their index and declaration mark (value,repetition)
+size_t resolve_array_index_from_normal_sintax(size_t address_of_data_struct,size_t repetition[], 
+                                        size_t value_of_index[], size_t rank);
+
 // FUNCTION TO WRITE
 size_t resolve_value_lenght(size_t existing_lenght, size_t requested_lenght, __uintmax_t value);
 size_t resolve_method_lenght(size_t existing_lenght, size_t method_address);

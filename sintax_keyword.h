@@ -8,6 +8,8 @@
 #define IF_KEY "if"
 #define MACRO_INDENT_KEY "#"
 
-#define ALGORITM_FOR_RESOLVING_A_COMPLEX_DATA_STRUCTURE ":((Xa + o) + :(Xi + o)[] * repetition[] * $a)"
+#define ALGORITM_FOR_RESOLVING_A_COMPLEX_DATA_STRUCTURE ":((Xa + o) + :idx[i to dim] * repetition[i+1 to dim] * $a)"
+
+
 
 #endif

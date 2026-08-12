@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include "mem.h"
 #include "loader.h"
@@ -125,4 +126,12 @@ int main(){
 
     free_script();
 
+    /*IT IS STILL MEMORY MANAGEMENTE BUT MORE IN A READING WAY*/
+    size_t bs[] ={3,3}; //repetition getted from mem_parse.c  in this case this is = to [3][3]
+    size_t bss[] = {0, 8}; //getted form the script or where you are trying to access
+                                  //in this system [2][2] = [0][8] in both you access the last cells 
+
+    printf("%lu 42\n",resolve_array_index_from_normal_sintax(2,bs,
+                                            bss,2)
+                                        );
 }

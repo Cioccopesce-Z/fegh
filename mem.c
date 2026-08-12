@@ -18,20 +18,64 @@ size_t bytes_needed(__uintmax_t value){
 
 // FUNCTION TO READ
 
-/*
 
-size_t resolve_array_index_from_normal_sintax(size_t address_of_array,size_t repetition, size_t rank, 
-                                        size_t value_of_index[]){
+// resolve_array_index_from_normal_sintax(2,{3,3,2},{1,2,0},3); == 52 if lenght is equal to 5
+//rank stand for the layer of the matrix or otherwise the dimension of the index value array 
+size_t resolve_array_index_from_normal_sintax(size_t address_of_data_struct,size_t repetition[], 
+                                        size_t value_of_index[], size_t rank){
+
+    if(rank == 0){
+        printf("SYSTEM ERROR NON REACHABLE: no user should see this error since this function cant be called directly\n");
+        printf("therfore it means that the compiler is tryng to read in an array of size {%lu} and that is invalid of course\n",rank);
+        printf("maybe the code generated for accessing the data_struct as an array var or matrix of any kind\n");
+        printf("is wrong due to you tryng to access a cells not being part of the data you have selected\n");
+        printf("referenced by the starting_address: --%lu--\n\nremember that if you want to access a data that have an address",address_of_data_struct);
+        printf("that is lower to the one you are working with\nmaybe because you wanna see what variable set before this one\nwell as of now you cannot\n");
+        printf("unless you know the lenght of the variable before than you can\nuse the command :memory[&-the_lenght] to get the value you want\n");
+        exit(0);    
+    }
     
-    // :((Xa + o) + :(Xi + o)[] * repetition[] * $a)
+    // :((Xa + o) + idx[i to rank] * repetition[i+1 to rank] * $a)
 
-    get_value_of_address(address_of_array  + 
-                    value_of_index[i] * repetition[i] *get_direct_lenght_in_byte_of_variable_struct(address_of_array)
-                        );
+    size_t idx = 0;
+    size_t accumulator[rank];
+    for (int i = 0; i < rank; i++){
+        accumulator[i] = 0;
+    }
+
+    for ( int j = 0; j < rank-1; j++){
+
+        accumulator[j] += value_of_index[j];
+        
+        for (int i = j+1; i < rank; i++){
+            
+            accumulator[j] *= repetition[i];
+
+        }
+
+    }
+
+    accumulator[rank-1] += value_of_index[rank-1];
+
+    idx = 0;
+    for (int i = 0; i < rank; i++){
+        idx += accumulator[i];
+    }
+
+    
+    
+    //now it need to be moltiplicated by the lenght of the unit of the matrices 
+    // (the lenght of the varin the matrix)
+    idx = idx * get_direct_lenght_in_byte_of_variable_struct(address_of_data_struct);
+
+    //now it need to be added the base address of the struct since now
+    //it has been calculated starting by 0 as reference
+    idx += address_of_data_struct;
+
+    return idx;
+
 }
 
-
-*/
 size_t get_lenght_in_byte_of_value_from_address(size_t address){
 
     size_t v_lenght_in_byte = 0;

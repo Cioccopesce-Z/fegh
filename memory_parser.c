@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*ALL THIS WILL BECAME USEFULL WHEN WEARE TO CREATE THE REFERENCE TABLE AND CHECK FOR BAD ACCESSING TO ARRAY
+                   (OVERFLOW)            */
+
 var_data_struct *var_table = NULL;
 size_t var_table_count = 0;
 size_t var_table_capacity = 0;
