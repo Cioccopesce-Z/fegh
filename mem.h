@@ -76,7 +76,11 @@ size_t declare_simple_variable(size_t byte_dim, size_t value, size_t methodlist)
                                    int use_address, size_t address_offset,
                                    size_t lenght_in_byte_of_value, __uintmax_t value,
                                    int use_method, size_t method_address,
-                                   
+                                 
                                    __uint8_t **lista_byte_descrivente_la_var, size_t *capacity);
+      
+      size_t preview_resolve_array_index_from_normal_sintax(size_t address_of_data_struct,
+                                             size_t repetition[], size_t value_of_index[],
+                                             size_t rank, __uint8_t *preview_memory);
 
 #endif

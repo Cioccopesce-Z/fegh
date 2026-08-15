@@ -195,7 +195,7 @@ __uintmax_t create_metadata_for_var_struct_in_a_scope(size_t base_line_in_script
         else
             continue;
 
-        printf("DECLARATION_KEY - %c%c%c\n", *let_position, *(let_position+1), *(let_position+2));
+        printf("let - %c%c%c\n", *let_position, *(let_position+1), *(let_position+2));
 
         size_t function_index = line_belong_to_any_function_declaration(i);
 
@@ -352,27 +352,23 @@ static size_t total_celle(var_data_struct *v){
     return cells;
 }
 
+__uint8_t **scope_memory = NULL;
+size_t      *scope_dim    = NULL;
 
 void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/){
 
+    scope_memory = malloc(scope_count * sizeof(__uint8_t));
+    scope_dim    = malloc(scope_count * sizeof(size_t));
 
-    __uint8_t *scope_memory[scope_count];
-    size_t scope_dim[scope_count];
-
-    //reset all dim for safety
-    for(size_t i = 0; i < scope_count; i++){
+    for(size_t i = 0; i < scope_count; i++)
         scope_dim[i] = 0;
-    }
 
     //per ogni scope
     for(size_t i = 0; i < scope_count; i++){
 
-        printf("\n\n%lu' scope \n",i);
-
         //risolto tutte le variabili nello scope e costruito la loro struttura
         size_t vars_before = var_table_count;
         create_metadata_for_var_struct_in_a_scope(scope_table[i].start_line, scope_table[i].end_line);
-
 
         //risolvo tutte le variabili e reo la stringa di byte che fara da fingerprint
         size_t capacity = BASE_DIM;
@@ -400,10 +396,16 @@ void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/){
         }
 
         restart_initialize_preview();
-        printf("scope: [%lu]\n",i);
-        
-        for(size_t h = 0; h < scope_dim[i]; h++) printf("   [%lu] %u \n",h,scope_memory[i][h]);
+    }
+}
+
+/*stampa separata: legge scope_memory/scope_dim gia' costruiti, non li tocca*/
+void stampa_fingerprint_di_tutti_gli_scope(void){
+
+    for(size_t i = 0; i < scope_count; i++){
+        printf("scope: [%lu]\n", i);
+        for(size_t h = 0; h < scope_dim[i]; h++)
+            printf("   [%lu] %u \n", h, scope_memory[i][h]);
         printf("\n");
     }
-    
 }

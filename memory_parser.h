@@ -16,6 +16,11 @@ void stampa_var_table(void);
 
 void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/);
 
+extern __uint8_t **scope_memory;   /* scope_memory[i] = bytes del fingerprint dello scope i */
+extern size_t      *scope_dim;      /* scope_dim[i]    = lunghezza in byte di scope_memory[i] */
+
+void stampa_fingerprint_di_tutti_gli_scope(void);
+
 
 /* -------------------------------------------------------------------- */
 /* struttura di una variabile parsata da una dichiarazione "let"        */

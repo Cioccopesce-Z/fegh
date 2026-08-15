@@ -108,16 +108,19 @@ int main(){
 
     printf("\n\n");
 
+    create_memory_fingerprint_of_all_scope();
+    stampa_fingerprint_di_tutti_gli_scope();
     stampa_contenuto_var_table();
-
-    create_memory_fingerprint_of_all_scope();   
 
     free_scope_signatures();
     free_script();
 
     /* IT IS STILL MEMORY MANAGEMENTE BUT MORE IN A READING WAY */
-    size_t bs[]  = {3, 3, 2};  // repetition getted from mem_parse.c, = [3][3]
-    size_t bss[] = {1,1,1 };  // in questo sistema [2][2] = [0][8], si accede sempre all'ultima cella
+    size_t bs[]  = {2, 2, 2};  // repetition getted from mem_parse.c, = [3][3]
+    size_t bss[] = {0,1,1 };  // in questo sistema [2][2] = [0][8], si accede sempre all'ultima cella
 
-    printf("%lu 47\n", resolve_array_index_from_normal_sintax(2, bs, bss, 3));
+    printf("%lu 15\n", 
+        preview_resolve_array_index_from_normal_sintax(0,
+                bs, bss, 3, 
+                    scope_memory[/*uno scope a caso poi servira quando ci sara quello giusto*/ 0]));
 }

@@ -75,6 +75,43 @@ size_t resolve_array_index_from_normal_sintax(size_t address_of_data_struct,size
 
 }
 
+// mem.c — identica a resolve_array_index_from_normal_sintax, cambia solo l'ultima riga di calcolo
+size_t preview_resolve_array_index_from_normal_sintax(size_t address_of_data_struct,size_t repetition[], 
+                                        size_t value_of_index[], size_t rank, __uint8_t *preview_memory){
+
+    if(rank == 0){
+        printf("SYSTEM ERROR NON REACHABLE: ...\n");
+        exit(0);    
+    }
+
+    size_t idx = 0;
+    size_t accumulator[rank];
+    for (int i = 0; i < rank; i++){
+        accumulator[i] = 0;
+    }
+
+    for ( int j = 0; j < rank-1; j++){
+        accumulator[j] += value_of_index[j];
+        for (int i = j+1; i < rank; i++){
+            accumulator[j] *= repetition[i];
+        }
+    }
+
+    accumulator[rank-1] += value_of_index[rank-1];
+
+    idx = 0;
+    for (int i = 0; i < rank; i++){
+        idx += accumulator[i];
+    }
+
+    //unica differenza: lunghezza cella letta dal fingerprint, non da memory[]
+    idx = idx * preview_get_direct_lenght_in_address_of_variable_struct(address_of_data_struct, preview_memory);
+
+    idx += address_of_data_struct;
+
+    return idx;
+}
+
 size_t get_lenght_in_byte_of_value_from_address(size_t address){
 
     size_t v_lenght_in_byte = 0;
