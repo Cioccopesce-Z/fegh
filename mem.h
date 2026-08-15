@@ -42,7 +42,7 @@ size_t get_variable_struct_end_index_from_address(size_t address);
 size_t get_methodlist_lenght_in_byte_from_address(size_t address);
 size_t get_methodlist_of_variable_from_address(size_t address);
 size_t get_value_of_address(size_t address);
-size_t get_direct_lenght_in_byte_of_variable_struct(size_t address);
+size_t get_direct_lenght_in_address_of_variable_struct(size_t address);
 
 //function to parse and get the correct address of an array by their index and declaration mark (value,repetition)
 size_t resolve_array_index_from_normal_sintax(size_t address_of_data_struct,size_t repetition[], 
@@ -59,6 +59,9 @@ size_t initialize_variable(int use_scope, size_t scope_address,
                             size_t lenght_in_byte_of_value, __uintmax_t value,
                             int use_method, size_t method_address);
 
+void restart_initialize_preview();
+
+
 void set_scope_start_end(int is_start, int auto_set_code_for_scope, int scope_code);
 
 void update_value_of_variable_from_address(size_t address, __uintmax_t value);
@@ -66,5 +69,14 @@ void update_method_of_variable_from_address(size_t address);
 
 size_t declare_simple_array(size_t byte_dim, size_t value, size_t methodlist, size_t repetition);
 size_t declare_simple_variable(size_t byte_dim, size_t value, size_t methodlist);
+
+   //--preview
+      size_t preview_get_direct_lenght_in_address_of_variable_struct(size_t address,__uint8_t *preview_memory);
+      size_t preview_initialize_variable(int use_scope, size_t scope_address,
+                                   int use_address, size_t address_offset,
+                                   size_t lenght_in_byte_of_value, __uintmax_t value,
+                                   int use_method, size_t method_address,
+                                   
+                                   __uint8_t **lista_byte_descrivente_la_var, size_t *capacity);
 
 #endif

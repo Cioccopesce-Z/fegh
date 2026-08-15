@@ -1,7 +1,6 @@
 #include "mem.h"
-#include "memory_parser.h"
-#include "sintax_keyword.h"
 #include <stddef.h>
+#include <stdlib.h>
 
 void begin(size_t byte_to_allocate){
 
@@ -66,7 +65,7 @@ size_t resolve_array_index_from_normal_sintax(size_t address_of_data_struct,size
     
     //now it need to be moltiplicated by the lenght of the unit of the matrices 
     // (the lenght of the varin the matrix)
-    idx = idx * get_direct_lenght_in_byte_of_variable_struct(address_of_data_struct);
+    idx = idx * get_direct_lenght_in_address_of_variable_struct(address_of_data_struct);
 
     //now it need to be added the base address of the struct since now
     //it has been calculated starting by 0 as reference
@@ -129,6 +128,19 @@ size_t get_variable_struct_end_index_from_address(size_t address){
 
 }
 
+size_t preview_get_variable_struct_end_index_from_address(size_t address, __uint8_t *preview_memory){
+
+    size_t struct_dim = 0;
+
+    for (size_t i = 0; i < byte_for_dim; i++) {
+        struct_dim |= (size_t)preview_memory[address + byte_for_scope + i] 
+                                                            << (8 * i);
+    }
+
+    return struct_dim;
+
+}
+
 size_t get_methodlist_lenght_in_byte_from_address(size_t address){
     if(address >= to_declare){
         printf("errore: indirizzo %lu fuori dai limiti (%zu) in get_methodlist_lenght_in_byte_from_address\n", address, to_declare);
@@ -164,9 +176,18 @@ size_t get_methodlist_of_variable_from_address(size_t address){
     return methodlist_code;
 }
 
-size_t get_direct_lenght_in_byte_of_variable_struct(size_t address){
+size_t get_direct_lenght_in_address_of_variable_struct(size_t address){
 
     size_t dimension = get_variable_struct_end_index_from_address(address);
+
+    dimension = dimension - address;
+
+    return dimension;
+}
+
+size_t preview_get_direct_lenght_in_address_of_variable_struct(size_t address,__uint8_t *preview_memory){
+
+    size_t dimension = preview_get_variable_struct_end_index_from_address(address, preview_memory);
 
     dimension = dimension - address;
 
@@ -259,9 +280,9 @@ se lenght_in_byte è = 0 allora viene assegnata autonomamente la dimensione
 mentre viene specificato con use_method se ci sono da aggiungere metodi alla variabile.
 nota: sia la dimensione del value che quella del method vengono fissate alla
 prima dichiarazione e non sono piu' ridimensionabili in seguito.*/
-size_t initialize_variable(int use_scope, size_t scope_address,
-                            int use_address, size_t address_offset,  
-                            size_t lenght_in_byte_of_value, __uintmax_t value,
+size_t initialize_variable(int use_scope, size_t scope_address,                    //  e' un return serve per
+                            int use_address, size_t address_offset,              //      |  generare i fingerprint
+                            size_t lenght_in_byte_of_value, __uintmax_t value,//         V
                             int use_method, size_t method_address){
 
     static size_t backup_end = 0;
@@ -317,6 +338,133 @@ size_t initialize_variable(int use_scope, size_t scope_address,
     for(size_t i = 0; i < byte_for_dim; i++){
         memory[start + byte_for_scope + i] = (__uint8_t)(record_end >> (8 * i));
     }
+
+    return start;
+}
+
+static size_t preview_cursor = 0;
+
+//use quando si vuole iniziare a generare la mappa virtuale di un nuovo scope
+void restart_initialize_preview(){
+    preview_cursor = 0;
+}
+
+void if_it_isnt_big_enough_double_dim(__uint8_t *pt, size_t current_dim, size_t to_allocate){
+
+    if(current_dim >= to_allocate ){
+
+        pt = realloc(pt, current_dim * 2);
+        
+
+    }
+
+    return;
+
+}
+
+size_t preview_initialize_variable(int use_scope, size_t scope_address,
+                                   int use_address, size_t address_offset,
+                                   size_t lenght_in_byte_of_value, __uintmax_t value,
+                                   int use_method, size_t method_address,
+
+                                   __uint8_t **lista_byte_descrivente_la_var, size_t *capacity){
+    
+    size_t start = use_address ? address_offset : preview_cursor;
+
+
+    size_t old_v_lenght = 0;
+    size_t existing_method_lenght = 0;
+
+
+    size_t new_v_lenght = resolve_value_lenght(old_v_lenght,
+                                               lenght_in_byte_of_value,
+                                               value);
+
+    if(new_v_lenght == 0)
+        return start;
+
+
+    size_t record_end = start +
+                        byte_for_scope +
+                        byte_for_dim +
+                        byte_for_vleng +
+                        new_v_lenght;
+
+
+    size_t method_lenght = 0;
+
+
+    if(use_method){
+
+        method_lenght = resolve_method_lenght(existing_method_lenght,
+                                              method_address);
+
+        if(method_lenght == 0)
+            return start;
+
+
+        record_end += byte_for_method_lenght + method_lenght;
+    }
+
+
+    // il buffer virtuale e' abbastanza grande da contenere questo record?
+    // se no, lo faccio crescere UNA volta sola, qui, prima di scrivere un solo byte
+    if(record_end > *capacity){
+        while(record_end > *capacity)
+            *capacity *= 2;
+        *lista_byte_descrivente_la_var = realloc(*lista_byte_descrivente_la_var, *capacity);
+    }
+
+    size_t cursor = start;
+
+
+    for(size_t i = 0; i < byte_for_scope; i++){
+        (*lista_byte_descrivente_la_var)[cursor++] =
+            (__uint8_t)(scope_address >> (8*i));
+    }
+
+
+    for(size_t i = 0; i < byte_for_dim; i++){
+        (*lista_byte_descrivente_la_var)[cursor++] =
+            (__uint8_t)(record_end >> (8*i));
+    }
+
+
+    for(size_t i = 0; i < byte_for_vleng; i++){
+        (*lista_byte_descrivente_la_var)[cursor++] =
+            (__uint8_t)(new_v_lenght >> (8*i));
+    }
+
+
+    for(size_t i = 0; i < new_v_lenght; i++){
+        (*lista_byte_descrivente_la_var)[cursor++] =
+            (__uint8_t)(value >> (8*i));
+    }
+
+
+    if(use_method){
+
+        for(size_t i = 0; i < byte_for_method_lenght; i++){
+            (*lista_byte_descrivente_la_var)[cursor++] =
+                (__uint8_t)(method_lenght >> (8*i));
+        }
+
+
+        for(size_t i = 0; i < method_lenght; i++){
+            (*lista_byte_descrivente_la_var)[cursor++] =
+                (__uint8_t)(method_address >> (8*i));
+        }
+    }
+
+
+    /*
+        aggiorna il cursore virtuale solo se
+        l'allocazione era automatica
+    */
+    if(!use_address){
+        preview_cursor = record_end;
+    }
+
 
     return start;
 }

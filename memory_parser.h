@@ -1,7 +1,6 @@
 #ifndef MEMORY_PARSER_H 
 #define MEMORY_PARSER_H
 
-#include "loader.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -14,6 +13,8 @@ __uintmax_t create_metadata_for_var_struct_in_a_scope(size_t base, size_t end);
 /*stampa contenuto struct delle variabile con metadati a fini di debug*/
 void stampa_contenuto_var_table(void);
 void stampa_var_table(void);
+
+void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/);
 
 
 /* -------------------------------------------------------------------- */

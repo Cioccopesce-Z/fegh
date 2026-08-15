@@ -1,3 +1,4 @@
+#include "mem.h"
 #include "sintax_keyword.h"
 #include "memory_parser.h"
 #include "loader.h"
@@ -98,10 +99,19 @@ size_t return_dimension_in_byte_of_var_struct(char *start_to_parse_let_instructi
         exit(0);
     }
 
+    /* copia di lavoro: strtok scrive '\0' al posto dei ':' dentro la
+       stringa che riceve, e qui riceviamo un puntatore DENTRO script[i]
+       (o dentro args[j]). Se lavorassimo sull'originale, lo spezzeremmo
+       in modo permanente alla prima chiamata. */
+    size_t len = strlen(start_to_parse_let_instruction_position);
+    char *copy = malloc(len + 1);
+    if (!copy) { fprintf(stderr, "OOM return_dimension_in_byte_of_var_struct\n"); exit(1); }
+    strcpy(copy, start_to_parse_let_instruction_position);
+
     char **tokens = NULL;
     size_t count = 0, cap = 0;
 
-    char *tok = strtok(start_to_parse_let_instruction_position, ":");
+    char *tok = strtok(copy, ":");
     while (tok) {
         if (count == cap) {
             cap = cap ? cap * 2 : 4;
@@ -114,9 +124,8 @@ size_t return_dimension_in_byte_of_var_struct(char *start_to_parse_let_instructi
     }
 
     parse_let(tokens, count);
-    free(tokens);   /* libera solo l'array di puntatori, non le stringhe:
-                        quelle vivono dentro il buffer originale, e il nome
-                        e' gia' stato copiato in v.name dentro parse_let */
+    free(tokens);   /* solo l'array di puntatori */
+    free(copy);     /* parse_let ha gia' copiato name dentro v.name, la copy non serve piu' */
     return 0;
 }
 
@@ -252,8 +261,8 @@ static void stampa_var_recursive(
 }
 
 /*stampa per debug*/
-void stampa_contenuto_var_table(void)
-{
+void stampa_contenuto_var_table(void){
+
     printf("\n========== CONTENUTO VAR TABLE ==========\n");
 
     for (size_t i = 0; i < var_table_count; i++) {
@@ -324,4 +333,77 @@ void stampa_contenuto_var_table(void)
 
 
     printf("\n========== FINE VAR TABLE ==========\n\n");
+}
+
+void create_table_scope_id(){
+
+    FILE *fp = fopen("LookUpTable", "w");
+    if (!fp)
+        return;
+
+    
+    
+}
+
+static size_t total_celle(var_data_struct *v){
+    size_t cells = 1;
+    for(size_t d = 0; d < v->rank; d++)
+        cells *= v->repetition[d];
+    return cells;
+}
+
+
+void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/){
+
+
+    __uint8_t *scope_memory[scope_count];
+    size_t scope_dim[scope_count];
+
+    //reset all dim for safety
+    for(size_t i = 0; i < scope_count; i++){
+        scope_dim[i] = 0;
+    }
+
+    //per ogni scope
+    for(size_t i = 0; i < scope_count; i++){
+
+        printf("\n\n%lu' scope \n",i);
+
+        //risolto tutte le variabili nello scope e costruito la loro struttura
+        size_t vars_before = var_table_count;
+        create_metadata_for_var_struct_in_a_scope(scope_table[i].start_line, scope_table[i].end_line);
+
+
+        //risolvo tutte le variabili e reo la stringa di byte che fara da fingerprint
+        size_t capacity = BASE_DIM;
+        scope_memory[i] = malloc(capacity);
+
+        //per ogni variabile
+        for(size_t variable_in_scope = vars_before; variable_in_scope < var_table_count; variable_in_scope++){
+
+            size_t cells = total_celle(&var_table[variable_in_scope]);
+
+            //una var con repetition = N variabili UGUALI e CONSECUTIVE,
+            //non un singolo record con metadati sulla forma
+            for(size_t c = 0; c < cells; c++){
+                size_t idx = preview_initialize_variable(true, i, 
+                                            false, auto, 
+                                            var_table[variable_in_scope].dimension,
+                                            var_table[variable_in_scope].value, 
+                                            tru, var_table[variable_in_scope].method_list_code, 
+
+                                            &scope_memory[i], &capacity);
+
+                scope_dim[i] += preview_get_direct_lenght_in_address_of_variable_struct(idx,
+                                                             scope_memory[i]);
+            }
+        }
+
+        restart_initialize_preview();
+        printf("scope: [%lu]\n",i);
+        
+        for(size_t h = 0; h < scope_dim[i]; h++) printf("   [%lu] %u \n",h,scope_memory[i][h]);
+        printf("\n");
+    }
+    
 }

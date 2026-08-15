@@ -1,9 +1,18 @@
+//let nome :dim :repetition :method :value;
 
 scope main() { 
 
-    let matr :1:3:3:2:199:8;
+    let matr :1:3:3:2:99:8;
 
 }
 
 
+scope funzione_uno() {
+    
+    let var : 1 : 1 :0 :5;
+    let hij : 1 : 1 :0 :6;
+}
 
+scope array(let arr :1 :2 :2 :2 :99 :7){
+
+}

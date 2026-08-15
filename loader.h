@@ -48,6 +48,7 @@ typedef struct {
 
 extern sign_of_scope *scope_table;
 extern size_t scope_count;
+extern char **script;
 
 /* Analizza script[] (già caricato da load_script) e popola scope_table. */
 void build_scope_signatures(void);
