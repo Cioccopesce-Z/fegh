@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "free.h"
 #include "mem.h"
 #include "loader.h"
 #include "memory_parser.h"
@@ -112,9 +114,6 @@ int main(){
     stampa_fingerprint_di_tutti_gli_scope();
     stampa_contenuto_var_table();
 
-    free_scope_signatures();
-    free_script();
-
     /* IT IS STILL MEMORY MANAGEMENTE BUT MORE IN A READING WAY */
     size_t bs[]  = {2, 2, 2};  // repetition getted from mem_parse.c, = [3][3]
     size_t bss[] = {0,1,1 };  // in questo sistema [2][2] = [0][8], si accede sempre all'ultima cella
@@ -123,4 +122,6 @@ int main(){
         preview_resolve_array_index_from_normal_sintax(0,
                 bs, bss, 3, 
                     scope_memory[/*uno scope a caso poi servira quando ci sara quello giusto*/ 0]));
+
+    free_all_fegh_resources();
 }
