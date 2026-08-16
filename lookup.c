@@ -1,5 +1,6 @@
 #include "lookup.h"
 #include "sintax_keyword.h"
+#include <stddef.h>
 
 FILE *open_lookup_table(void){
     return fopen(TABLE_FILENAME, "w");
@@ -8,12 +9,12 @@ FILE *open_lookup_table(void){
 void write_scope_header_to_lookup_table(FILE *fp, size_t scope_index, sign_of_scope *scope){
 
     //salvo metadata base per lo scope come nome/st/en/func?
-    fprintf(fp,"scope %lu %s %d %d %s\n",scope_index,scope->name,
+    fprintf(fp,"scope $%lu %s %d %d %s\n",scope_index,scope->name,
                             scope->start_line, scope->end_line,
                             scope->is_function ? "si" : "no");
 }
 
-void write_variable_to_lookup_table(FILE *fp,size_t idx, var_data_struct *v){
+void write_variable_to_lookup_table(FILE *fp,size_t idx, var_data_struct *v, __uint8_t mmap[], size_t mmap_dim){
 
     //aggiungo i metadati della variabile appartenente allo scope al file
     fprintf(fp,"    @%lu %s %lu-", idx, v->name, v->dimension);
@@ -23,4 +24,13 @@ void write_variable_to_lookup_table(FILE *fp,size_t idx, var_data_struct *v){
         fprintf(fp,"%lu ",v->repetition[repetition]);
     }
     fprintf(fp, "\n");
+    fprintf(fp,"        &%lu-",mmap_dim);
+
+    for(size_t h = 0; h < mmap_dim; h++)
+            fprintf(fp,"%u ",mmap[h]);
+
+    fprintf(fp, "\n\n");
+
+    
+
 }

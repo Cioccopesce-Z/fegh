@@ -9,6 +9,6 @@ FILE *open_lookup_table(void);
 
 void write_scope_header_to_lookup_table(FILE *fp, size_t scope_index, sign_of_scope *scope);
 
-void write_variable_to_lookup_table(FILE *fp,size_t idx, var_data_struct *v);
+void write_variable_to_lookup_table(FILE *fp,size_t idx, var_data_struct *v, __uint8_t mmap[], size_t mmap_dim);
 
 #endif

@@ -409,7 +409,8 @@ void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/){
             }
 
             //aggiungo i metadati della variabile appartenente allo scope al file
-            write_variable_to_lookup_table(fp,first_idx, &var_table[variable_in_scope]);
+            write_variable_to_lookup_table(fp,first_idx, &var_table[variable_in_scope],
+                                            scope_memory[i],scope_dim[i]);
             first_idx_used = false;
         }
 
