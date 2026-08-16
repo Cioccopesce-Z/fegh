@@ -36,6 +36,8 @@ typedef struct {
     size_t  rank;               /* numero di entry in repetition            */
 } var_data_struct;
 
+extern size_t var_table_count;
+extern size_t var_table_capacity;
 extern var_data_struct *var_table;
 
 #endif

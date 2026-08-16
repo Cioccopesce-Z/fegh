@@ -1,6 +1,7 @@
 #include "mem.h"
 #include "sintax_keyword.h"
 #include "memory_parser.h"
+#include "lookup.h"
 #include "loader.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -359,12 +360,21 @@ void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/){
 
     scope_memory = malloc(scope_count * sizeof(__uint8_t));
     scope_dim    = malloc(scope_count * sizeof(size_t));
+    FILE *fp = open_lookup_table();
+    if (!fp)
+        return;
+
+
 
     for(size_t i = 0; i < scope_count; i++)
         scope_dim[i] = 0;
 
     //per ogni scope
     for(size_t i = 0; i < scope_count; i++){
+
+        //salvo metadata base per lo scope come nome/st/en/func?
+        write_scope_header_to_lookup_table(fp, i, &scope_table[i]);
+        
 
         //risolto tutte le variabili nello scope e costruito la loro struttura
         size_t vars_before = var_table_count;
@@ -381,8 +391,9 @@ void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/){
 
             //una var con repetition = N variabili UGUALI e CONSECUTIVE,
             //non un singolo record con metadati sulla forma
+            size_t idx = 0;
             for(size_t c = 0; c < cells; c++){
-                size_t idx = preview_initialize_variable(true, i, 
+                idx = preview_initialize_variable(true, i, 
                                             false, auto, 
                                             var_table[variable_in_scope].dimension,
                                             var_table[variable_in_scope].value, 
@@ -392,7 +403,13 @@ void create_memory_fingerprint_of_all_scope(/*taking script & scope_table*/){
 
                 scope_dim[i] += preview_get_direct_lenght_in_address_of_variable_struct(idx,
                                                              scope_memory[i]);
+
+                 
             }
+
+            //aggiungo i metadati della variabile appartenente allo scope al file
+            write_variable_to_lookup_table(fp,idx, &var_table[variable_in_scope]);
+
         }
 
         restart_initialize_preview();

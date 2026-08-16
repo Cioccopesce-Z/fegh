@@ -332,11 +332,9 @@ void printscript(){
 }
 
 /*
-* build_scope_signatures
-* -----------------------
-* Analizza tutto script[] (popolato da load_script) e costruisce
-* scope_table: una firma per ogni riga che apre uno scope ('{').
-* Da chiamare dopo load_script() e prima di usare scope_table.
+Analizza tutto script[] (popolato da load_script) e costruisce
+scope_table: una firma per ogni riga che apre uno scope ('{').
+Da chiamare dopo load_script() e prima di usare scope_table.
 */
 void build_scope_signatures(void){
     scope_count = 0;

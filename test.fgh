@@ -13,6 +13,6 @@ scope funzione_uno() {
     let hij : 1 : 1 :0 :6;
 }
 
-scope array(let arr :1 :2 :2 :2 :99 :7){
+scope function(let arr :1 :2 :2 :2 :99 :7){
 
 }
